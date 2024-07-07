@@ -154,11 +154,17 @@ func (c *CustomerOrder) UpdateCustOrdItems(update OrderItems) error {
 
 	for _, upd := range update.MenuIndications {
 		for i, ordItm := range c.OrderItems.MenuIndications {
-			if !processed[ordItm.ItemMenuNum] && ordItm.ItemMenuNum == upd.ItemMenuNum {
+			if ordItm.ItemMenuNum == upd.ItemMenuNum {
 				c.OrderItems.MenuIndications[i] = upd // Overwrite existing ordItm with upd
 				// Mark this ItemMenuNum as processed
 				processed[ordItm.ItemMenuNum] = true
 			}
+		}
+	}
+
+	for _, updn := range update.MenuIndications {
+		if !processed[updn.ItemMenuNum] {
+			c.OrderItems.MenuIndications = append(c.OrderItems.MenuIndications, updn)
 		}
 	}
 
