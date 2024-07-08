@@ -69,7 +69,7 @@ Your Email: %s
 Social: %s
 
 Consent: %s
-- needed to store & process your personal data.`, dateTimeJoined, c.NickName.Value(), c.Email.Value(), c.SocialMedia.Value(), c.Consent.Value())
+(_needed to store & process your personal data_)`, dateTimeJoined, c.NickName.Value(), c.Email.Value(), c.SocialMedia.Value(), c.Consent.Value())
 
 	return info
 }
