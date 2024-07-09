@@ -2,7 +2,7 @@ CREATE SEQUENCE customerorder_id_seq;
 
 CREATE TABLE userinfo (
 	cellnumber varchar(15) NOT NULL,
-    nickname varchar(255) NULL,
+	nickname varchar(255) NULL,
 	email varchar(255) NULL,
 	socialmedia varchar(255) NULL,
 	consent bool NULL,
