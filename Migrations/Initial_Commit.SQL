@@ -14,6 +14,7 @@ CREATE TYPE pricingTypeEnum AS ENUM ('WeightItem', 'SingleItem');
 
 CREATE TABLE catalogueitem (
 	catalogueID varchar(255) NOT NULL,
+	"selection" varchar(255) NULL,
 	catalogueitemID int4 NOT NULL,
 	"item" varchar(255) NULL,
 	"options" _text NULL,
