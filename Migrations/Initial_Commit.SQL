@@ -14,7 +14,7 @@ CREATE TYPE pricingTypeEnum AS ENUM ('WeightItem', 'SingleItem');
 
 CREATE TABLE catalogueitem (
 	catalogueID varchar(255) NOT NULL,
-	catalogueitemID integer NOT NULL,
+	catalogueitemID int NOT NULL,
 	"selection" varchar(255) NULL,
 	"item" varchar(255) NULL,
 	"options" varchar(255) NULL,
@@ -23,8 +23,8 @@ CREATE TABLE catalogueitem (
 );
 
 CREATE TABLE customerorder (
-    orderID INT PRIMARY KEY DEFAULT nextval('customerorder_id_seq'),
-    cellnumber VARCHAR(15) REFERENCES userinfo(cellnumber),
+    orderID int PRIMARY KEY DEFAULT nextval('customerorder_id_seq'),
+    cellnumber varchar(15) REFERENCES userinfo(cellnumber),
     catalogueID varchar(255) NOT NULL,
     orderitems varchar(255) NULL,
 	orderTotal numeric(12,0),
