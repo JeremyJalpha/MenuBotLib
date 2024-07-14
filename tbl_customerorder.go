@@ -173,7 +173,7 @@ func (c *CustomerOrder) UpdateCustOrdItems(update OrderItems) error {
 	return nil
 }
 
-func (c *CustomerOrder) UpdateOrInsertCurrentOrder(db *sql.DB, senderNum string, catalogueID string, update OrderItems, isAutoInc bool) error {
+func (c *CustomerOrder) UpdateOrInsertCurrentOrder(db *sql.DB, senderNum string, update OrderItems, isAutoInc bool) error {
 	// Try to find the order in the database
 	err := c.SetCurrentOrderFromDB(db, senderNum, isAutoInc)
 	if err != nil {
@@ -210,12 +210,12 @@ func (c *CustomerOrder) BuildItemName(itemNamePrefix string) string {
 }
 
 // Main function to tally the order
-func (c *CustomerOrder) TallyOrder(db *sql.DB, senderNum string, isAutoInc bool) (int, string, error) {
+func (c *CustomerOrder) TallyOrder(db *sql.DB, senderNum string, ctlgselections []CatalogueSelection, isAutoInc bool) (int, string, error) {
 	isInited := c.checkInitialization(db, senderNum, isAutoInc)
 	if isInited != custOrderInitState {
 		return -1, "", fmt.Errorf("while tallying the order, no current order")
 	}
 
-	cartTotal, cartSummary := c.OrderItems.CalculatePrice()
+	cartTotal, cartSummary := c.OrderItems.CalculatePrice(ctlgselections)
 	return cartTotal, cartSummary, nil
 }
