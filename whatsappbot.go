@@ -105,7 +105,7 @@ func (cmd UpdateOrderCommand) Execute(db *sql.DB, convo *ConversationContext, is
 		return fmt.Errorf("error parsing update answers command: %v", err)
 	}
 
-	err = convo.CurrentOrder.UpdateOrInsertCurrentOrder(db, convo.UserInfo.CellNumber, catalogueID, OrderItems{MenuIndications: updates}, isAutoInc)
+	err = convo.CurrentOrder.UpdateOrInsertCurrentOrder(db, convo.UserInfo.CellNumber, OrderItems{MenuIndications: updates}, isAutoInc)
 	if err != nil {
 		return fmt.Errorf("unhandled error updating order: %v", err)
 	}
@@ -116,7 +116,7 @@ func (cmd QuestionCommand) Execute(db *sql.DB, convo *ConversationContext, isAut
 	return fmt.Errorf("%s", cmd.CommandData.Text)
 }
 
-func BeginCheckout(db *sql.DB, ui UserInfo, c CustomerOrder, checkoutUrls CheckoutInfo, isAutoInc bool) string {
+func BeginCheckout(db *sql.DB, ui UserInfo, ctlgselections []CatalogueSelection, c CustomerOrder, checkoutUrls CheckoutInfo, isAutoInc bool) string {
 
 	// Create a new URL object for each URL
 	returnURL, _ := url.Parse(checkoutUrls.ReturnURL)
@@ -129,7 +129,7 @@ func BeginCheckout(db *sql.DB, ui UserInfo, c CustomerOrder, checkoutUrls Checko
 	checkoutUrls.NotifyURL = notifyURL.String()
 
 	//Tally the order and then create a CheckoutCart struct
-	cartTotal, cartSummary, err := c.TallyOrder(db, ui.CellNumber, isAutoInc)
+	cartTotal, cartSummary, err := c.TallyOrder(db, ui.CellNumber, ctlgselections, isAutoInc)
 	if err != nil {
 		return err.Error()
 	}
@@ -148,11 +148,11 @@ func parseQuestionCommand(match string, db *sql.DB, convo *ConversationContext, 
 	case "currentorder?":
 		return QuestionCommand{CommandData: CommandData{Name: "currentorder", Text: convo.CurrentOrder.GetCurrentOrderAsAString(db, convo.UserInfo.CellNumber, isAutoInc)}}
 	case "fr.prlist?":
-		return QuestionCommand{CommandData: CommandData{Name: "fr.prlist", Text: prclstPreamble + "\n\n" + PriceListAsAString()}}
+		return QuestionCommand{CommandData: CommandData{Name: "fr.prlist", Text: prclstPreamble + "\n\n" + AssembleCatalogueSelections(convo.Pricelist.PrlstPreamble, convo.Pricelist.Catalogue)}}
 	case "userinfo?":
 		return QuestionCommand{CommandData: CommandData{Name: "userinfo", Text: convo.UserInfo.GetUserInfoAsAString()}}
 	case "checkoutnow?":
-		return QuestionCommand{CommandData: CommandData{Name: "checkoutnow", Text: BeginCheckout(db, convo.UserInfo, convo.CurrentOrder, checkoutUrls, isAutoInc)}}
+		return QuestionCommand{CommandData: CommandData{Name: "checkoutnow", Text: BeginCheckout(db, convo.UserInfo, convo.Pricelist.Catalogue, convo.CurrentOrder, checkoutUrls, isAutoInc)}}
 	default:
 		return QuestionCommand{CommandData: CommandData{Name: "menu", Text: mainMenu}}
 	}
