@@ -30,3 +30,31 @@ func AssembleCatalogueSelections(pricelistpreamble string, ctlgselections []Cata
 
 	return selectionString
 }
+
+func CmpsCtlgSlctnsFromCtlgItms(ctlgitems []CatalogueItem) []CatalogueSelection {
+	var selections []CatalogueSelection
+	var currentSelection CatalogueSelection
+
+	for _, item := range ctlgitems {
+		if currentSelection.Preamble == "" {
+			// Initialize the first selection
+			currentSelection.Preamble = item.Selection
+		} else if currentSelection.Preamble != item.Selection {
+			// Start a new selection
+			selections = append(selections, currentSelection)
+			currentSelection = CatalogueSelection{
+				Preamble: item.Selection,
+			}
+		}
+
+		// Add the item to the current selection
+		currentSelection.Items = append(currentSelection.Items, item)
+	}
+
+	// Add the last selection (if any)
+	if currentSelection.Preamble != "" {
+		selections = append(selections, currentSelection)
+	}
+
+	return selections
+}
