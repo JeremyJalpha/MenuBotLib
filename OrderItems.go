@@ -21,15 +21,15 @@ type OrderItems struct {
 //{"MenuIndications":[{"ItemMenuNum":1,"ItemAmount":"2x3"},{"ItemMenuNum":2,"ItemAmount":"1x5"}]}
 //{"MenuIndications":[{"ItemMenuNum":9,"ItemAmount":"12"},{"ItemMenuNum":10,"ItemAmount":"1x3, 3x2, 2x1"},{"ItemMenuNum":6,"ItemAmount":"5"}]}
 
-func findItemInSelections(ItmMnuNum int) (*CatalogueItem, *CatalogueSelection) {
-	for _, selection := range selections {
+func findItemInSelections(ItmMnuNum int, ctlgselections []CatalogueSelection) (CatalogueItem, error) {
+	for _, selection := range ctlgselections {
 		for _, item := range selection.Items {
 			if item.CatalogueItemID == ItmMnuNum {
-				return &item, &selection
+				return item, nil
 			}
 		}
 	}
-	return nil, nil
+	return CatalogueItem{}, fmt.Errorf("item menu num not found")
 }
 
 func tallyOptions(options []string, userInput string) (int, error) {
@@ -91,13 +91,13 @@ func findBestPrice(orderAmount int, options []string) (int, error) {
 	return bestPrice, nil
 }
 
-func (c *OrderItems) CalculatePrice() (int, string) {
+func (c *OrderItems) CalculatePrice(ctlgselections []CatalogueSelection) (int, string) {
 	cartSummary := ""
 	cartTotal := 0
 	for _, orderItem := range c.MenuIndications {
 		// Look up the item in the sections
-		foundItem, _ := findItemInSelections(orderItem.ItemMenuNum)
-		if foundItem == nil {
+		foundItem, err := findItemInSelections(orderItem.ItemMenuNum, ctlgselections)
+		if err == nil {
 			// Add excluded items to the cart summary.
 			cartSummary += fmt.Sprintf("while tallying the order, user specified Item menu nunmber: %d not found in price list", orderItem.ItemMenuNum)
 			continue
