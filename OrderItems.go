@@ -97,7 +97,7 @@ func (c *OrderItems) CalculatePrice(ctlgselections []CatalogueSelection) (int, s
 	for _, orderItem := range c.MenuIndications {
 		// Look up the item in the sections
 		foundItem, err := findItemInSelections(orderItem.ItemMenuNum, ctlgselections)
-		if err == nil {
+		if err != nil {
 			// Add excluded items to the cart summary.
 			cartSummary += fmt.Sprintf("while tallying the order, user specified Item menu nunmber: %d not found in price list", orderItem.ItemMenuNum)
 			continue
