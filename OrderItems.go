@@ -56,7 +56,7 @@ func tallyOptions(options []string, userInput string) (int, error) {
 		// Find the match
 		match := re.FindStringSubmatch(options[optionNumber-1])
 		if len(match) < 2 {
-			return -99, fmt.Errorf("while tallying order, price for item nunmber: " + strconv.Itoa(optionNumber) + " not found in item option string")
+			return -99, fmt.Errorf("while tallying order, price for item number: " + strconv.Itoa(optionNumber) + " not found in item option string")
 		}
 
 		// Convert the extracted string to an integer
