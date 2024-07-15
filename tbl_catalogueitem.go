@@ -2,8 +2,8 @@ package menubotlib
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 // Define a custom type for PricingType
@@ -43,8 +43,12 @@ func InsertCatalogueItems(db *sql.DB, selections []CatalogueSelection) error {
 
 	for _, selection := range selections {
 		for _, item := range selection.Items {
-			options := strings.Join(item.Options, ", ")
-			_, err := db.Exec(insertStmt, item.CatalogueID, item.CatalogueItemID, selection.Preamble, item.Item, options, item.PricingType)
+			// Marshal the []string into JSON
+			optionsJSON, err := json.Marshal(item.Options)
+			if err != nil {
+				return err
+			}
+			_, err = db.Exec(insertStmt, item.CatalogueID, item.CatalogueItemID, selection.Preamble, item.Item, optionsJSON, item.PricingType)
 			if err != nil {
 				return err
 			}
@@ -77,10 +81,13 @@ func GetCatalogueItemsFromDB(db *sql.DB, catalogueid string) ([]CatalogueItem, e
 			item = CatalogueItem{}
 		}
 
-		if optionsStr != "" {
-			item.Options = strings.Split(optionsStr, ", ")
-		} else {
+		// Unmarshal the JSON back into a []string
+		var options []string
+		err = json.Unmarshal([]byte(optionsStr), &options)
+		if err != nil {
 			item.Options = nil
+		} else {
+			item.Options = options
 		}
 
 		rtnItems = append(rtnItems, item)
