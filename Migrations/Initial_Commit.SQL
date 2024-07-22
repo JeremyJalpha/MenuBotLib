@@ -27,8 +27,8 @@ CREATE TABLE customerorder (
     cellnumber varchar(15) REFERENCES userinfo(cellnumber),
     catalogueID varchar(255) NOT NULL,
     orderitems varchar(255) NULL,
-	orderTotal numeric(12,0),
-	ispaid bool NULL,
-	datetimedelivered timestamp NULL,
-	isclosed bool NULL
+    orderTotal numeric(12,0),
+    ispaid bool NULL,
+    datetimedelivered timestamp NULL,
+    isclosed bool NULL
 );
