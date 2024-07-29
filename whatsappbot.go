@@ -16,7 +16,8 @@ import (
 const (
 	custOrderInitState = "Initialized"
 	whatsAppServer     = "s.whatsapp.net"
-	sayMenu            = "For a command list please type & send-: menu?\nPlease include the question mark."
+
+	sayMenu = "For a command list please type & send-: menu?\nPlease include the question mark."
 
 	reminderGreeting = "Please save your email address, by typing & sending-: update email: example@emailprovider.com"
 
@@ -28,43 +29,39 @@ const (
 
 	unhandledCommandException = "Err:CF, Something went wrong processing your request."
 
-	updateOrderCommand = `update order 1:newAmount, 3:newAmount, 2:newAmount, ...
-where 1, 2 or 3 is the item number as listed in the price list - item order not important.
+	updateOrderCommand = "update order X:newAmount"
 
-For items with options please use the format-: 1x3, 3x1, 2x2, ...
-The first number is the option's hierarchical menu position and the second is your desired amount of that option.`
+	UpdateOrderCommExpl = "Where X is the item's price list number, item order not important."
 
 	fullOrderExample = `An order of: 
-12 grams of Peanut butter breath, 
-3 Blue dream cannisters, 
-2 Slurricane cannister,
-1 GMO cannisters and 
-5 grams of Strawberry cheesecake.
+1 Tshirt, 
+2 hats, 
+1 Mug.
 
-Should look like-: update order 9:12, 10: 1x3, 3x2, 2x1, 6:5`
+Should look like-: update order 1:1, 2:2, 3:1`
 
-	prclstPreamble = `Welcome to Flying Rasta,
+	deleteOrder = "To remove an item from your order, use-: update order X:0"
 
-to save your order please type & send-:` + updateOrderCommand + "\n\n" + fullOrderExample + ` 
+	shopComands = "to save your order please type & send-:" + updateOrderCommand + "\n" + UpdateOrderCommExpl +
+		"\n\n" + fullOrderExample +
+		"\n\n" + deleteOrder +
+		"\n\n" + "currentorder? - Prints your current pending order." +
+		"\n" + "To checkout type & send-: checkoutnow?"
 
-To checkout type & send-: checkoutnow?`
+	queryCommands = `menu? - Prints this menu.
+shop? - Prints the shop price list.
+userinfo? - Prints your user info.`
 
-	deleteOrder = `To remove an item from your order, use the update order command with 0 as the new amount like so-: update order X:0
-Where X is the item number as listed in the price list`
-
-	mainMenu = `Main Menu, command list:
-
-fr.prlist? - Prints the Flying Rasta price list.
-
-menu? - Prints this menu.
-userinfo? - Prints your user info.
-currentorder? - Prints your current pending order.
-checkoutnow? - Prints a payment link for your current basket.
-
-update email: newEmail
+	updateCommands = `update email: newEmail
 update nickname: newNickname
-update social: newSocial
-update consent: newConsent` + "\n\n" + updateOrderCommand + "\n\n" + deleteOrder
+update consent: newConsent`
+
+	mainMenu = "Main Menu, command list:" +
+		"\n\n" + queryCommands +
+		"\n\n" + updateCommands
+
+	prclstPreamble = "Welcome to the Shop," +
+		"\n\n" + shopComands
 )
 
 type Command interface {
