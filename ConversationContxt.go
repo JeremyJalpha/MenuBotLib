@@ -21,6 +21,7 @@ type ConversationContext struct {
 
 func NewConversationContext(db *sql.DB, senderNumber, messagebody string, prlst Pricelist, isAutoInc bool) *ConversationContext {
 	userInfo, curOrder, userExisted := NewUserInfo(db, senderNumber, isAutoInc)
+	userInfo.CellNumber = senderNumber
 	context := &ConversationContext{
 		UserInfo:     userInfo,
 		UserExisted:  userExisted,
