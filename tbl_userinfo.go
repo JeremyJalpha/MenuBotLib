@@ -48,14 +48,23 @@ func NewUserInfo(db *sql.DB, senderNumber string, isAutoInc bool) (UserInfo, Cus
 	uI := UserInfo{CellNumber: senderNumber}
 	err := uI.SetUserInfoFromDB(db)
 	if err != nil {
-		uI.DateTimeJoined = sql.NullTime{Time: time.Now(), Valid: true}
-		err := uI.InsertNewUserInfoWithOnlyCellNum(db)
-		if err != nil && !strings.Contains(err.Error(), "error:11") {
-			log.Println("failed to insert user: " + senderNumber + "\n" + err.Error())
+		if strings.Contains(err.Error(), "no rows") {
+			uI.DateTimeJoined = sql.NullTime{Time: time.Now(), Valid: true}
+			err := uI.InsertNewUserInfoWithOnlyCellNum(db)
+			if err != nil {
+				log.Println("failed to insert user: " + senderNumber + "\n" + err.Error())
+			}
+			return uI, cO, false
+		} else {
+			log.Println("Select user falied with: " + err.Error())
+			return uI, cO, false
 		}
-		return uI, cO, false
 	}
-	cO.SetCurrentOrderFromDB(db, senderNumber, isAutoInc)
+	err = cO.SetCurrentOrderFromDB(db, senderNumber, isAutoInc)
+	if err != nil {
+		log.Println("failed to set order for " + senderNumber + "\n" + err.Error())
+		return uI, cO, true
+	}
 	return uI, cO, true
 }
 
@@ -77,8 +86,8 @@ Consent: %s
 // We need a general Get UserInfo function the below reflects the code not having a ORM.
 // Get User Info from database
 func (c *UserInfo) SetUserInfoFromDB(db *sql.DB) error {
-	queryString := `SELECT cellnumber, nickname, email, socialmedia, consent, datetimejoined FROM userinfo WHERE cellnumber = $1`
-	err := db.QueryRow(queryString, c.CellNumber).Scan(&c.CellNumber, &c.NickName, &c.Email, &c.SocialMedia, &c.Consent, &c.DateTimeJoined)
+	queryString := `SELECT nickname, email, socialmedia, consent, datetimejoined FROM userinfo WHERE cellnumber = $1`
+	err := db.QueryRow(queryString, c.CellNumber).Scan(&c.NickName, &c.Email, &c.SocialMedia, &c.Consent, &c.DateTimeJoined)
 	if err != nil {
 		return err
 	}
