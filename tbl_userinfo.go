@@ -44,8 +44,8 @@ type UserInfo struct {
 // NewUserInfo creates a new UserInfo object and returns it and whether the user previously existed or not.
 func NewUserInfo(db *sql.DB, senderNumber string, isAutoInc bool) (UserInfo, CustomerOrder, bool) {
 	var cO CustomerOrder
-
 	uI := UserInfo{CellNumber: senderNumber}
+	
 	err := uI.SetUserInfoFromDB(db)
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows") {
