@@ -1,4 +1,5 @@
 CREATE SEQUENCE customerorder_id_seq;
+CREATE SEQUENCE sighting_id_seq;
 
 CREATE TABLE userinfo (
 	cellnumber varchar(15) NOT NULL,
@@ -11,6 +12,8 @@ CREATE TABLE userinfo (
 );
 
 CREATE TYPE pricingTypeEnum AS ENUM ('WeightItem', 'SingleItem');
+CREATE TYPE tribeSizeEnum AS ENUM ('Small', 'Medium', 'Large');
+CREATE TYPE activityLevelEnum AS ENUM ('Low', 'Medium', 'High');
 
 CREATE TABLE catalogueitem (
 	catalogueID varchar(255) NOT NULL,
@@ -20,6 +23,16 @@ CREATE TABLE catalogueitem (
 	"options" varchar(255) NULL,
 	pricingType pricingTypeEnum,
 	CONSTRAINT catalogueitem_pk PRIMARY KEY (catalogueID, catalogueitemID)
+);
+
+CREATE TABLE sighting (
+	sightingID int PRIMARY KEY DEFAULT nextval('sighting_id_seq'),
+	cellnumber varchar(15) REFERENCES userinfo(cellnumber),
+	sightingaddress varchar(255) NULL,
+	tribeSize tribeSizeEnum,
+	activityLevel activityLevelEnum,
+	currentactivity varchar(255) NULL,
+	datetimeposted timestamp NOT NULL
 );
 
 CREATE TABLE customerorder (
