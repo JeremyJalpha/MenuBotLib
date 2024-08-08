@@ -39,13 +39,14 @@ type UserInfo struct {
 	SocialMedia    NullString
 	Consent        NullBool
 	DateTimeJoined sql.NullTime
+	IsVerified     NullBool
 }
 
 // NewUserInfo creates a new UserInfo object and returns it and whether the user previously existed or not.
 func NewUserInfo(db *sql.DB, senderNumber string, isAutoInc bool) (UserInfo, CustomerOrder, bool) {
 	var cO CustomerOrder
 	uI := UserInfo{CellNumber: senderNumber}
-	
+
 	err := uI.SetUserInfoFromDB(db)
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows") {
@@ -86,8 +87,8 @@ Consent: %s
 // We need a general Get UserInfo function the below reflects the code not having a ORM.
 // Get User Info from database
 func (c *UserInfo) SetUserInfoFromDB(db *sql.DB) error {
-	queryString := `SELECT nickname, email, socialmedia, consent, datetimejoined FROM userinfo WHERE cellnumber = $1`
-	err := db.QueryRow(queryString, c.CellNumber).Scan(&c.NickName, &c.Email, &c.SocialMedia, &c.Consent, &c.DateTimeJoined)
+	queryString := `SELECT nickname, email, socialmedia, consent, datetimejoined, isverified FROM userinfo WHERE cellnumber = $1`
+	err := db.QueryRow(queryString, c.CellNumber).Scan(&c.NickName, &c.Email, &c.SocialMedia, &c.Consent, &c.DateTimeJoined, &c.IsVerified)
 	if err != nil {
 		return err
 	}

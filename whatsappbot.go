@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"database/sql"
 
@@ -28,6 +29,14 @@ const (
 	noCommandText = "Err:NC, Sorry I couldn't identify a command in your mesasge."
 
 	unhandledCommandException = "Err:CF, Something went wrong processing your request."
+
+	newSightingAlternate = "Or use the web form to log a new baboon sighting: "
+
+	newSightingPostURL = "https://baboonobsbot-b6ee90798e7e.herokuapp.com/newsighting"
+
+	newSightingCommand = "new sighting: [address], tribe size, activity level, [current activity]"
+
+	newSightingSqrBrkts = "_(with square brackets)_"
 
 	updateOrderCommand = "update order X:newAmount"
 
@@ -57,10 +66,12 @@ update nickname: newNickname
 update consent: newConsent`
 
 	mainMenu = "Main Menu, command list:" +
+		"\n\n" + newSightingCommand + "\n" + newSightingSqrBrkts +
+		"\n\n" + newSightingAlternate + "\n" + newSightingPostURL +
 		"\n\n" + queryCommands +
 		"\n\n" + updateCommands
 
-	prclstPreamble = "Welcome to the Shop," +
+	prclstPreamble = "Welcome to B.O.B's Shop," +
 		"\n\n" + shopComands
 )
 
@@ -76,6 +87,10 @@ type UpdateUserInfoCommand struct {
 }
 
 type UpdateOrderCommand struct {
+	Text string
+}
+
+type NewSightingCommand struct {
 	Text string
 }
 
@@ -104,6 +119,19 @@ func (cmd UpdateOrderCommand) Execute(db *sql.DB, convo *ConversationContext, is
 		return fmt.Errorf("unhandled error updating order: %v", err)
 	}
 	return errors.New("successfully updated current order")
+}
+
+func (cmd NewSightingCommand) Execute(db *sql.DB, convo *ConversationContext, isAutoInc bool) error {
+	sighting, err := cmd.ParseNewSightingCommand(convo.UserInfo)
+	if err != nil {
+		return fmt.Errorf("error parsing new sighting: %v", err)
+	}
+
+	err = AddSighting(db, sighting, convo.UserInfo)
+	if err != nil {
+		return fmt.Errorf("unhandled error adding new sighting: %v", err)
+	}
+	return errors.New("successfully added new sighting")
 }
 
 func (cmd QuestionCommand) Execute(db *sql.DB, convo *ConversationContext, isAutoInc bool) error {
@@ -193,9 +221,10 @@ func GetResponseToMsg(convo *ConversationContext, db *sql.DB, checkoutUrls Check
 
 // Precompile regular expressions
 var (
-	regexQuestionMark  = regexp.MustCompile(`(menu\?|fr\.prlist\?|userinfo\?|currentorder\?|checkoutnow\?)`)
+	regexQuestionMark  = regexp.MustCompile(`(menu\?|shop\?|userinfo\?|currentorder\?|checkoutnow\?)`)
 	regexUpdateField   = regexp.MustCompile(`(update email|update nickname|update social|update consent):\s*(\S*)`)
 	regexUpdateAnswers = regexp.MustCompile(`(update order):?\s*(.*)`)
+	regexNewSighting   = regexp.MustCompile(`(new sighting):?\s*(.*)`)
 )
 
 func GetCommandsFromLastMessage(messageBody string, convo *ConversationContext, db *sql.DB, checkoutUrls CheckoutInfo, isAutoInc bool) []Command {
@@ -221,7 +250,167 @@ func GetCommandsFromLastMessage(messageBody string, convo *ConversationContext, 
 		}
 	}
 
+	if matches := regexNewSighting.FindAllStringSubmatch(messageBody, -1); matches != nil {
+		for _, match := range matches {
+			commands = append(commands, NewSightingCommand{Text: match[2]})
+		}
+	}
+
 	return commands
+}
+
+// finds the index of the first comma after the last closing bracket
+func findFirstClsngBrkt(input string) int {
+	foundBracket := false
+	for i, char := range input {
+		if char == ']' {
+			foundBracket = true
+		}
+		if foundBracket && char == ',' {
+			return i
+		}
+	}
+	return -1 // Return -1 if no such comma is found
+}
+
+// finds the index of the first opening bracket
+func findFirstOpnngBrkt(input string) int {
+	for i, char := range input {
+		if char == '[' {
+			return i
+		}
+	}
+	return -1 // Return -1 if no such bracket is found
+}
+
+// finds the index of the first comma after the last opening bracket
+func findLastOpnngBrkt(input string) int {
+	foundBracket := false
+	for i, char := range input {
+		if char == ',' {
+			foundBracket = true
+		}
+		if foundBracket && char == '[' {
+			return i
+		}
+	}
+	return -1 // Return -1 if no such comma is found
+}
+
+// finds the index of the last closing bracket
+func findLastClsngBrkt(input string) int {
+	for i, char := range input {
+		if char == ']' {
+			return i
+		}
+	}
+	return -1 // Return -1 if no such bracket is found
+}
+
+// parses the command text to extract the content between brackets and modifies the original string
+func parseAddressBrktGroup(commandText *string) (string, error) {
+	clB := findFirstClsngBrkt(*commandText)
+	if clB == -1 {
+		return "", errors.New("pattern '],' not found")
+	}
+	opB := findFirstOpnngBrkt(*commandText)
+	if clB < opB {
+		return "", errors.New("] found before [")
+	}
+
+	// Extract the substring between the brackets
+	bracketContent := (*commandText)[opB+1 : clB-1]
+
+	// Trim the brackets from the original string
+	*commandText = (*commandText)[:opB] + (*commandText)[clB+1:]
+
+	return bracketContent, nil
+}
+
+// parses the command text to extract the content between brackets and modifies the original string
+func parseCurrentActionBrktGroup(commandText *string) (string, error) {
+	opB := findLastOpnngBrkt(*commandText)
+	if opB == -1 {
+		return "", errors.New("pattern ',[' not found")
+	}
+	clB := findLastClsngBrkt(*commandText)
+	if opB > clB {
+		return "", errors.New("] found before [")
+	}
+
+	// Extract the substring between the brackets
+	bracketContent := (*commandText)[opB+1 : clB]
+
+	// Trim the brackets from the original string
+	*commandText = (*commandText)[:opB] + (*commandText)[clB+1:]
+
+	return bracketContent, nil
+}
+
+func validateActivityLevel(level string) (ActivityLevel, error) {
+	switch level {
+	case "1", "low":
+		return T_Low, nil
+	case "2", "medium":
+		return T_Medium, nil
+	case "3", "high":
+		return T_High, nil
+	default:
+		return "", errors.New("invalid activity level")
+	}
+}
+
+func validateTribeSize(size string) (TribeSize, error) {
+	switch size {
+	case "1", "small":
+		return S_Small, nil
+	case "2", "medium":
+		return S_Medium, nil
+	case "3", "large":
+		return S_Large, nil
+	default:
+		return "", errors.New("invalid tribe size")
+	}
+}
+
+func (cmd NewSightingCommand) ParseNewSightingCommand(u UserInfo) (Sighting, error) {
+
+	sghtngAddress, err := parseAddressBrktGroup(&cmd.Text)
+	if err != nil {
+		return Sighting{}, fmt.Errorf("failed to parse sighting text: %v", err)
+	}
+
+	curActivity, err := parseCurrentActionBrktGroup(&cmd.Text)
+	if err != nil {
+		return Sighting{}, fmt.Errorf("failed to parse sighting text: %v", err)
+	}
+
+	cmd.Text = strings.TrimSpace(cmd.Text)
+	cmd.Text = strings.TrimPrefix(cmd.Text, ",")
+	cmd.Text = strings.TrimSuffix(cmd.Text, ",")
+
+	remainingFields := strings.Split(cmd.Text, ",")
+	if len(remainingFields) != 2 {
+		return Sighting{}, errors.New("too many or too few commas provided in sighting text")
+	}
+
+	TribeSize, err := validateTribeSize(strings.TrimSpace(remainingFields[0]))
+	if err != nil {
+		return Sighting{}, fmt.Errorf("failed to convert inputted tribe size: %v", err)
+	}
+	ActivityLevel, err := validateActivityLevel(strings.TrimSpace(remainingFields[1]))
+	if err != nil {
+		return Sighting{}, fmt.Errorf("failed to convert inputted activity level: %v", err)
+	}
+
+	return Sighting{
+		CellNumber:      u.CellNumber,
+		SightingAddress: sghtngAddress,
+		CurrentActivity: curActivity,
+		TribeSize:       TribeSize,
+		ActivityLevel:   ActivityLevel,
+		DateTimePosted:  sql.NullTime{Time: time.Now(), Valid: true},
+	}, nil
 }
 
 func ParseUpdateOrderCommand(commandText string) ([]MenuIndication, error) {
