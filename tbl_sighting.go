@@ -35,6 +35,32 @@ type Sighting struct {
 	DateTimePosted  sql.NullTime
 }
 
+func validateActivityLevel(level string) (ActivityLevel, error) {
+	switch level {
+	case "1", "low":
+		return T_Low, nil
+	case "2", "medium":
+		return T_Medium, nil
+	case "3", "high":
+		return T_High, nil
+	default:
+		return "", errors.New("invalid activity level")
+	}
+}
+
+func validateTribeSize(size string) (TribeSize, error) {
+	switch size {
+	case "1", "small":
+		return S_Small, nil
+	case "2", "medium":
+		return S_Medium, nil
+	case "3", "large":
+		return S_Large, nil
+	default:
+		return "", errors.New("invalid tribe size")
+	}
+}
+
 // InsertSighting inserts a new sighting into the database.
 func insertSighting(db *sql.DB, s Sighting) error {
 	// Prepare an SQL statement to insert a new sighting

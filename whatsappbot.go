@@ -347,32 +347,6 @@ func parseCurrentActionBrktGroup(commandText *string) (string, error) {
 	return bracketContent, nil
 }
 
-func validateActivityLevel(level string) (ActivityLevel, error) {
-	switch level {
-	case "1", "low":
-		return T_Low, nil
-	case "2", "medium":
-		return T_Medium, nil
-	case "3", "high":
-		return T_High, nil
-	default:
-		return "", errors.New("invalid activity level")
-	}
-}
-
-func validateTribeSize(size string) (TribeSize, error) {
-	switch size {
-	case "1", "small":
-		return S_Small, nil
-	case "2", "medium":
-		return S_Medium, nil
-	case "3", "large":
-		return S_Large, nil
-	default:
-		return "", errors.New("invalid tribe size")
-	}
-}
-
 func (cmd NewSightingCommand) ParseNewSightingCommand(u UserInfo) (Sighting, error) {
 
 	sghtngAddress, err := parseAddressBrktGroup(&cmd.Text)
