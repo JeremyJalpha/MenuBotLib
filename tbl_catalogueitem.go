@@ -72,6 +72,11 @@ func GetCatalogueItemsFromDB(db *sql.DB, catalogueid string) ([]CatalogueItem, e
 
 	var rtnItems []CatalogueItem
 
+//Example:
+// {"MenuIndications":[
+// {"ItemMenuNum":1,"ItemAmount":"12"},
+// {"ItemMenuNum":14,"ItemAmount":"10"}]}
+
 	for rows.Next() {
 		var item CatalogueItem
 		var optionsStr string
